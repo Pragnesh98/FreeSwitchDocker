@@ -1,0 +1,50 @@
+# Jenkins.
+
+FROM ubuntu:20.04
+LABEL maintainer=Star-Tele-Logic
+
+# Enable the Ubuntu multiverse repository.
+RUN apt-get update
+RUN apt install -y git subversion build-essential autoconf automake libtool libncurses5 libncurses5-dev make libjpeg-dev libtool libtool-bin libsqlite3-dev libpcre3-dev libspeexdsp-dev libldns-dev libedit-dev yasm liblua5.2-dev libopus-dev cmake
+RUN apt install -y libcurl4-openssl-dev libexpat1-dev libgnutls28-dev libtiff5-dev libx11-dev unixodbc-dev libssl-dev python-dev zlib1g-dev libasound2-dev libogg-dev libvorbis-dev libperl-dev libgdbm-dev libdb-dev uuid-dev libsndfile1-dev
+
+WORKDIR /usr/src
+RUN git clone https://github.com/signalwire/libks.git
+WORKDIR libks
+RUN cmake .
+RUN make && make install
+
+WORKDIR /usr/src
+RUN git clone https://github.com/signalwire/signalwire-c.git
+WORKDIR signalwire-c
+RUN cmake .
+RUN make && make install
+
+WORKDIR /usr/src
+RUN wget https://files.freeswitch.org/freeswitch-releases/freeswitch-1.10.3.-release.zip
+RUN unzip freeswitch-1.10.3.-release.zip
+WORKDIR freeswitch-1.10.3.-release/
+
+RUN ./configure -C
+RUN make && make install
+
+RUN make all cd-sounds-install cd-moh-install
+
+RUN ln -s /usr/local/freeswitch/bin/freeswitch /usr/bin/
+RUN ln -s /usr/local/freeswitch/bin/fs_cli /usr/bin
+
+WORKDIR /usr/local
+RUN groupadd freeswitch
+RUN adduser --disabled-password  --quiet --system --home /usr/local/freeswitch --gecos "FreeSWITCH Voice Platform" --ingroup freeswitch freeswitch
+RUN chown -R freeswitch:freeswitch /usr/local/freeswitch/
+RUN chmod -R ug=rwX,o= /usr/local/freeswitch/
+RUN chmod -R u=rwx,g=rx /usr/local/freeswitch/bin/
+
+COPY conf/freeswitch.service /etc/systemd/system/freeswitch.service
+
+WORKDIR /etc/systemd/system
+RUN sudo chmod ugo+x freeswitch.service
+
+RUN systemctl start freeswitch.service
+RUN systemctl enable freeswitch.service
+RUN systemctl status freeswitch.service
