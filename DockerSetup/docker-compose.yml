@@ -1,0 +1,39 @@
+services:
+    kamailio:
+        hostname: test-kamailio
+        container_name: hepta-kamailio
+        image: kamailio:v5
+        volumes:
+          - /home/ubuntu/CCDockerSetup/kamailio/kamailio.cfg:/etc/kamailio/kamailio.cfg
+          - /home/ubuntu/CCDockerSetup/kamailio/kamailio-lua.lua:/etc/kamailio/kamailio-lua.lua
+          - /home/ubuntu/CCDockerSetup/kamailio/tls.cfg:/etc/kamailio/tls.cfg
+          - /home/ubuntu/CCDockerSetup/kamailio/fullchain.pem:/etc/kamailio/fullchain.pem
+          - /home/ubuntu/CCDockerSetup/kamailio/privkey.pem:/etc/kamailio/privkey.pem
+          - /home/ubuntu/CCDockerSetup/kamailio/kamctlrc:/etc/kamailio/kamctlrc
+        restart: always
+        network_mode: host
+    freeswitch-1:
+        hostname: test-freeswitch1
+        container_name: hepta-freeswitch
+        image: freeswitch:v1
+        volumes:
+          - freeswitch-recordings:/usr/local/freeswitch/recordings/
+          - /home/ubuntu/CCDockerSetup/scripts/:/usr/local/freeswitch/scripts/
+          - /home/ubuntu/CCDockerSetup/config/vars.xml:/usr/local/freeswitch/conf/vars.xml
+          - /home/ubuntu/CCDockerSetup/config/autoload_configs:/usr/local/freeswitch/conf/autoload_configs
+          - /home/ubuntu/CCDockerSetup/config/config.lua:/etc/ucall/config.lua
+          - /home/ubuntu/CCDockerSetup/config/config.php:/etc/ucall/config.php
+          - /home/ubuntu/CCDockerSetup/config/fusionpbx:/var/www/fusionpbx
+            #- /home/ubuntu/CCDockerSetup/config/mod_callcenter.c:/usr/src/freeswitch-1.10.3.-release/src/mod/applications/mod_callcenter/mod_callcenter.c
+          - /usr/local/freeswitch/log/xml_cdr/:/usr/local/freeswitch/log/xml_cdr/
+        restart: always
+        network_mode: host
+version: "3.7"
+volumes:
+    freeswitch-recordings: ~
+    #networks:
+        #azure_asterisk_net:
+        #ipam:
+        #  driver: default
+        #  config:
+        #      - subnet: 172.29.0.0/16

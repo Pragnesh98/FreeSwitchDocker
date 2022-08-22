@@ -1,0 +1,241 @@
+--[[
+	The Initial Developer of the Original Code is
+
+	Portions created by the Initial Developer are Copyright (C)
+	the Initial Developer. All Rights Reserved.
+
+	Contributor(s):
+
+	Progressive Dialer 
+--]]
+	
+-- 	local cache = require "resources.functions.redisDB"
+-- 	local redis = require "resources.functions.redis";
+	require "resources.functions.config";
+-- 	local json = require "resources.functions.lunajson"
+	
+-- 	dofile(scripts_dir.."/resources/functions/logger.lua");
+-- 	dofile(scripts_dir.."/resources/functions/utility.lua");
+
+	debug["info"] = true;
+	debug['debug'] = true;
+	debug['sql'] = true;
+
+	api = freeswitch.API()
+
+	freeswitch.consoleLog("NOTICE", "CALLBACK_SCHEDULE..!")
+	
+	callback_uuid = argv[1];
+	domain_uuid = argv[2];
+	queue_uuid = argv[3];
+	agent_uuid = argv[4];
+	siptrunk_uuid = argv[5];
+	domain_name = argv[6];
+	customer_number = argv[7];
+	sipproxy = freeswitch.getGlobalVariable("SIPPROXYIP");	 
+
+	local json
+	if (debug["sql"]) then
+		json = require "resources.functions.lunajson"
+	end
+	
+	local Database = require "resources.functions.database";
+	dbh = Database.new('system');
+	assert(dbh:connected());
+
+	if( agent_uuid ~= nil) then
+		local sql = "SELECT agent_id FROM v_call_center_agents"
+			.. " WHERE call_center_agent_uuid = :call_center_agent_uuid" ;
+		local params = {call_center_agent_uuid = agent_uuid};
+		if(debug["sql"]) then
+			freeswitch.consoleLog("notice", "[DIALER]: ".. sql .. "; params:" .. json.encode(params) .. "\n");
+		end
+		dbh:query(sql, params, function(rows)
+			agent_number = rows["agent_id"];
+		end);
+	end
+
+        if( siptrunk_uuid ~= nil) then
+                local sql = "SELECT scan_prefix,siptrunk_cid_number FROM v_siptrunks "
+                        .. "WHERE siptrunk_uuid = :siptrunk_uuid AND domain_uuid = :domain_uuid";
+                local params = {siptrunk_uuid = siptrunk_uuid, domain_uuid=domain_uuid};
+                if(debug["sql"]) then
+                        freeswitch.consoleLog("notice","[DIALER]: ".. sql .. "; params:" .. json.encode(params) .. "\n");
+                end
+                dbh:query(sql, params, function(rows)
+                        scan_prefix = rows["scan_prefix"];
+						siptrunk_cid_number = rows["siptrunk_cid_number"];
+                end);
+        end
+
+	if(siptrunk_cid_number == "" or siptrunk_cid_number == nil or siptrunk_cid_number == "nil") then
+		origination_caller_id_number = "923190068";
+		caller_id_name = "923190068"
+	else
+		caller_id_name = siptrunk_cid_number;
+		origination_caller_id_number = siptrunk_cid_number;
+	end
+	
+	freeswitch.consoleLog("NOTICE", "DOMAIN UUID : ["..tostring(domain_uuid).."]")
+	freeswitch.consoleLog("NOTICE", "QUEUE : ["..tostring(queue_uuid).."]")
+	freeswitch.consoleLog("NOTICE", "Agent_Number : ["..tostring(agent_number).."]")
+
+	local leg_a_session = ""
+	local disposition_reason = "UNKNOWN";
+	local leg_b_session = "";
+	local agent = "";
+	local other_loopback_leg_uuid = "";
+	local cc_agent_bridged = "false"
+-- 	local callStartTime = os.date("%Y-%m-%d %H:%M:%S");
+	local proxy = "";
+	local direction = "";
+
+	freeswitch.consoleLog("NOTICE", " DESTINATION QUEUE")
+	
+
+	api_cmd = "user_data "..tostring(agent_number).."@"..tostring(domain_name).." var hold_music"
+        hold_music = api:executeString(api_cmd)
+        freeswitch.consoleLog("notice", "API CMD : " .. tostring(api_cmd) .. "\n");
+        --if(hold_music) then
+          --      freeswitch.consoleLog("notice", "Caller Destination MOH  : " .. tostring(hold_music) .. "\n");
+            --    session:setVariable("dst_hold_music", tostring(hold_music));
+       -- end
+	
+	sofia_str="{media_webrtc=true,sip_h_X-context="..tostring(domain_name).."}sofia/internal/"..tostring(agent_number).."@"..tostring(domain_name)..";fs_path=sip:"..tostring(sipproxy);
+	
+	freeswitch.consoleLog("NOTICE", " DialString : "..tostring(sofia_str));
+	leg_a_session = freeswitch.Session(sofia_str);
+	
+	uuid = leg_a_session:getVariable("uuid");
+	freeswitch.consoleLog("INFO"," CallBack loopback a-leg UUID : "..tostring(uuid));
+	leg_a_session:setVariable("park_after_bridge","true")
+
+
+        if(hold_music) then
+                freeswitch.consoleLog("notice", "Caller Destination MOH  : " .. tostring(hold_music) .. "\n");
+                leg_a_session:setVariable("dst_hold_music", tostring(hold_music));
+                --freeswitch.consoleLog("notice", "Caller Destination MOH  : http_cache://http://heptadial.com/usr/share/freeswitch/sounds/music/hariom.com/Test/8000/callbackthanks.wav\n");
+                --leg_a_session:setVariable("dst_hold_music", "http_cache://http://heptadial.com/usr/share/freeswitch/sounds/music/hariom.com/Test/8000/callbackthanks.wav");
+        end
+
+	api_cmd = "user_data "..tostring(agent_number).."@"..tostring(domain_name).." var user_record"
+        user_record = api:executeString(api_cmd)
+        freeswitch.consoleLog("notice", "user_record : " .. tostring(user_record) .. "\n");
+      
+    if(user_record == "enabled") then
+                api_cmd = "eval ${strftime(%Y/%m/%d)}";
+                timestamp = api:executeString(api_cmd)
+                cc_record_filename = "/var/lib/freeswitch/recordings/"..tostring(domain_name).."/"..tostring(timestamp).."/"..tostring(uuid)..".wav";
+                leg_a_session:setVariable("cc_record_filename",cc_record_filename);
+                leg_a_session:execute("export", "execute_on_answer=record_session "..tostring(cc_record_filename));
+                freeswitch.consoleLog("notice", "cc_record_filename : " .. tostring(cc_record_filename) .. "\n");
+    end
+
+
+--[[	if(leg_a_session:ready()) then
+		other_loopback_leg_uuid = leg_a_session:getVariable("other_loopback_leg_uuid");
+		freeswitch.consoleLog("INFO"," CallBack loopback b-leg UUID : "..tostring(other_loopback_leg_uuid).."");
+	end
+	while(leg_a_session:ready() and cc_agent_bridged ~= "true" and other_loopback_leg_uuid ~= "") do
+		os.execute("sleep 1")
+		api_cmd = "uuid_getvar "..other_loopback_leg_uuid.." cc_agent_bridged";
+		cc_agent_bridged = api:executeString(api_cmd)
+--		freeswitch.consoleLog("NOTICE", "CallBack Agent leg bridged : '" ..tostring(cc_agent_bridged).. "'")
+	end
+]]--		
+	if(not leg_a_session:ready()  and domain_name ~= nil) then
+		disposition_reason = "TIMEOUT"
+	end 
+
+	if(leg_a_session:ready()) then
+		agent_uuid = "";
+		api_cmd = "create_uuid"
+		origin_uuid_customer = api:executeString(api_cmd)
+--[[
+		if(other_loopback_leg_uuid ~= "") then
+			api_cmd = "uuid_getvar "..tostring(other_loopback_leg_uuid).." cc_agent_uuid"
+			agent_uuid = api:executeString(api_cmd)
+			freeswitch.consoleLog("NOTICE", " CallBack Agent uuid " .. tostring(agent_uuid) .. "")
+		end 
+
+]]--
+		--api_cmd = "user_data "..tostring(agent_number).."@"..tostring(domain_name).." var outbound_caller_id_name"
+		--origination_caller_id_name = api:executeString(api_cmd)
+		
+		--api_cmd = "user_data "..tostring(agent_number).."@"..tostring(domain_name).." var outbound_caller_id_number"
+		--origination_caller_id_number = api:executeString(api_cmd)
+		
+		--if (origination_caller_id_number == "" or origination_caller_id_number == nil or origination_caller_id_number == "nil" ) then
+	--		origination_caller_id_number = cc_agent_id;
+	--		origination_caller_id_name = cc_agent_id;
+	--	end
+-- 			origination_caller_id_number = "923190068";
+		--[[	api_cmd = "uuid_getvar "..tostring(other_loopback_leg_uuid).." cc_record_filename"
+			cc_record_filename = api:executeString(api_cmd)
+			freeswitch.consoleLog("NOTICE", " cc_record_filename: " .. tostring(cc_record_filename) .. "")
+			api_cmd = "uuid_getvar "..tostring(other_loopback_leg_uuid).." cc_queue"
+			cc_queue = api:executeString(api_cmd)
+			freeswitch.consoleLog("NOTICE", " cc_queue: " .. tostring(cc_queue) .. "")
+			api_cmd = "uuid_getvar "..tostring(other_loopback_leg_uuid).." cc_agent"
+			cc_agent = api:executeString(api_cmd)
+			freeswitch.consoleLog("NOTICE", " cc_agent: " .. tostring(cc_agent) .. "")
+			
+			api_cmd = "uuid_getvar "..tostring(other_loopback_leg_uuid).." cc_side"
+			cc_side = api:executeString(api_cmd)
+			freeswitch.consoleLog("NOTICE", " cc_side: " .. tostring(cc_side) .. "")			
+			
+			api_cmd = "uuid_getvar "..tostring(other_loopback_leg_uuid).." cc_cause"
+			cc_cause = api:executeString(api_cmd)
+			freeswitch.consoleLog("NOTICE", " cc_cause: " .. tostring(cc_cause) .. "")			
+
+			api_cmd = "uuid_getvar "..tostring(other_loopback_leg_uuid).." cc_queue_answered_epoch"
+			cc_queue_answered_epoch = api:executeString(api_cmd)
+			freeswitch.consoleLog("NOTICE", " cc_queue_answered_epoch: " .. tostring(cc_queue_answered_epoch) .. "")			
+
+			api_cmd = "uuid_getvar "..tostring(other_loopback_leg_uuid).." cc_agent_bridged"
+			cc_agent_bridged = api:executeString(api_cmd)
+			freeswitch.consoleLog("NOTICE", " cc_agent_bridged: " .. tostring(cc_agent_bridged) .. "")			
+		]]--	
+		--	sipproxy = freeswitch.getGlobalVariable("SIPPROXYIP");
+
+			sofia_str = "{domain_name="..tostring(domain_name)..",sip_h_X-context="..tostring(domain_name)..",sip_h_X-siptrunk_uuid="..tostring(siptrunk_uuid)..",domain_uuid="..tostring(domain_uuid)..",ignore_early_media=true,sip_h_X-ucall=outbound,origination_caller_id_name='"..tostring(origination_caller_id_number).."',origination_caller_id_number="..tostring(origination_caller_id_number).."}sofia/external/"..tostring(customer_number).."@"..tostring(domain_name)..";fs_path=sip:"..tostring(sipproxy).."";
+			freeswitch.consoleLog("INFO"," CallBack Customer Call DialString : "..tostring(sofia_str));
+			
+			leg_b_session = freeswitch.Session(sofia_str);
+			leg_b_session:setAutoHangup(false);
+			leg_a_session:setAutoHangup(false);
+		
+			cmd = "uuid_transfer ".. agent_uuid .." -both customeragent XML customeragent"
+			result = api:executeString(cmd);
+
+			if(leg_b_session:ready()) then
+				if(leg_b_session:answered()) then
+					api_cmd = "uuid_setvar "..tostring(origin_uuid_customer).." session_in_hangup_hook true"
+					session_in_hangup_hook = api:executeString(api_cmd)
+					api_cmd = "uuid_setvar "..tostring(origin_uuid_customer).." api_hangup_hook 'lua agent_hangup_hook.lua "..tostring(agent_uuid).."'"
+					api_hangup_hook = api:executeString(api_cmd)
+				
+					leg_b_session:setVariable("park_after_bridge","true")
+					leg_b_session:setVariable("hangup_after_conference","false")
+					cmd = "uuid_bridge "..origin_uuid_customer.." "..agent_uuid;
+					result = api:executeString(cmd);
+					freeswitch.consoleLog("INFO"," CallBack Call bridge API : "..cmd.."\t Status : "..result.."")
+
+					--cmd = "uuid_kill "..other_loopback_leg_uuid
+					--result = api:executeString(cmd);
+					--freeswitch.consoleLog("INFO"," CallBack Kill API : "..cmd.."\t Status : "..result.."")
+					disposition_reason = "SUCCESS"
+				end
+			else
+				local hangup_reason = leg_b_session:hangupCause();
+				freeswitch.consoleLog("NOTICE", "leg_b_session:hangupCause() = " .. hangup_reason )
+
+				leg_b_session:hangup();
+				leg_a_session:hangup();
+			end
+
+	end
+
+	
+	
+	

@@ -1,0 +1,10 @@
+<configuration name="ucalldialer.conf" description="CC-Outbound Dialer">
+	<settings>
+		<param name = "odbc-dsn" value = "pgsql://hostaddr=65.2.67.84 port=5432 dbname=ucall user=postgres password=BngrpF2vAqIdn4MbTVTUVUO9I options=''"/>
+		<param name="dbname" value="ucall"/>
+		<param name="system-call-limit" value="300"/>
+		<param name="php-path" value="/usr/bin/php"/>
+		<param name="sms-script-path" value="sms_script/send_sms.php"/>
+		<param name="system-sms-limit" value="1"/>
+	</settings>
+</configuration>

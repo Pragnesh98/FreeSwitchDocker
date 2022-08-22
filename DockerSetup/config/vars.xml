@@ -1,0 +1,113 @@
+
+<!-- Codecs -->
+<X-PRE-PROCESS cmd="set" data="global_codec_prefs=OPUS,PCMA,PCMU" />
+<X-PRE-PROCESS cmd="set" data="outbound_codec_prefs=OPUS,PCMA,PCMU" />
+<!--<X-PRE-PROCESS cmd="set" data="media_mix_inbound_outbound_codecs=true" />-->
+<!--<X-PRE-PROCESS cmd="set" data="rtp_secure_media_outbound=true" />-->
+<!--<X-PRE-PROCESS cmd="export" data="zrtp_secure_media=false"/>-->
+<!--<X-PRE-PROCESS cmd="export" data="nolocal:rtp_secure_media=true"/>-->
+<!--<X-PRE-PROCESS cmd="set" data="answer_delay=2000" /> -->
+<!-- Defaults -->
+<X-PRE-PROCESS cmd="set" data="default_password=1234" />
+<X-PRE-PROCESS cmd="set" data="domain_uuid=f219a4f3-e51e-4ab1-83f7-4e652ef524bb" />
+<X-PRE-PROCESS cmd="set" data="console_loglevel=info" />
+<X-PRE-PROCESS cmd="set" data="default_areacode=208" />
+<X-PRE-PROCESS cmd="set" data="sit=%(274,0,913.8);%(274,0,1370.6);%(380,0,1776.7)" />
+<X-PRE-PROCESS cmd="set" data="use_profile=internal" />
+<X-PRE-PROCESS cmd="set" data="default_language=en" />
+<X-PRE-PROCESS cmd="set" data="default_dialect=us" />
+<X-PRE-PROCESS cmd="set" data="default_voice=callie" />
+<X-PRE-PROCESS cmd="set" data="ajax_refresh_rate=3000" />
+<X-PRE-PROCESS cmd="set" data="ringback=$${us-ring}" />
+<X-PRE-PROCESS cmd="set" data="transfer_ringback=$${us-ring}" />
+<X-PRE-PROCESS cmd="set" data="sleep=0" />
+<X-PRE-PROCESS cmd="set" data="record_ext=wav" />
+<X-PRE-PROCESS cmd="set" data="default_country=US" />
+<X-PRE-PROCESS cmd="set" data="default_countrycode=1" />
+<X-PRE-PROCESS cmd="set" data="default_exitcode=011" />
+<X-PRE-PROCESS cmd="set" data="call_debug=false" />
+
+<!-- IP Address -->
+<X-PRE-PROCESS cmd="set" data="external_rtp_ip=13.36.87.234" />
+<X-PRE-PROCESS cmd="set" data="external_sip_ip=172.31.23.44" /> 
+
+<!-- Music on Hold -->
+<X-PRE-PROCESS cmd="set" data="hold_music=local_stream://default" />
+<!-- Ringtones -->
+<X-PRE-PROCESS cmd="set" data="us-ring=%(2000,4000,440,480)" />
+<X-PRE-PROCESS cmd="set" data="fi-ring=%(1000,4000,425)" />
+<X-PRE-PROCESS cmd="set" data="fr-ring=%(1500,3500,440)" />
+<X-PRE-PROCESS cmd="set" data="pt-ring=%(1000,5000,400)" />
+<X-PRE-PROCESS cmd="set" data="hk-ring=%(400,200,440,480);%(400,3000,440,480)" />
+<X-PRE-PROCESS cmd="set" data="hu-ring=%(1250,3750,425)" />
+<X-PRE-PROCESS cmd="set" data="il-ring=%(1000,3000,400)" />
+<X-PRE-PROCESS cmd="set" data="in-ring=%(400,200,425,375);%(400,2000,425,375)" />
+<X-PRE-PROCESS cmd="set" data="jp-ring=%(1000,2000,420,380)" />
+<X-PRE-PROCESS cmd="set" data="ko-ring=%(1000,2000,440,480)" />
+<X-PRE-PROCESS cmd="set" data="pk-ring=%(1000,2000,400)" />
+<X-PRE-PROCESS cmd="set" data="pl-ring=%(1000,4000,425)" />
+<X-PRE-PROCESS cmd="set" data="ro-ring=%(1850,4150,475,425)" />
+<X-PRE-PROCESS cmd="set" data="rs-ring=%(1000,4000,425)" />
+<X-PRE-PROCESS cmd="set" data="it-ring=%(1000,4000,425)" />
+<X-PRE-PROCESS cmd="set" data="ru-ring=%(800,3200,425)" />
+<X-PRE-PROCESS cmd="set" data="sa-ring=%(1200,4600,425)" />
+<X-PRE-PROCESS cmd="set" data="tr-ring=%(2000,4000,450)" />
+<X-PRE-PROCESS cmd="set" data="uk-ring=%(400,200,400,450);%(400,2000,400,450)" />
+<X-PRE-PROCESS cmd="set" data="bong-ring=v" />
+<X-PRE-PROCESS cmd="set" data="au-ring=%(400,200,383,417);%(400,2000,383,417)" />
+<X-PRE-PROCESS cmd="set" data="be-ring=%(1000,3000,425)" />
+<X-PRE-PROCESS cmd="set" data="ca-ring=%(2000,4000,440,480)" />
+<X-PRE-PROCESS cmd="set" data="cn-ring=%(1000,4000,450)" />
+<X-PRE-PROCESS cmd="set" data="cy-ring=%(1500,3000,425)" />
+<X-PRE-PROCESS cmd="set" data="cz-ring=%(1000,4000,425)" />
+<X-PRE-PROCESS cmd="set" data="de-ring=%(1000,4000,425)" />
+<X-PRE-PROCESS cmd="set" data="dk-ring=%(1000,4000,425)" />
+<X-PRE-PROCESS cmd="set" data="dz-ring=%(1500,3500,425)" />
+<X-PRE-PROCESS cmd="set" data="eg-ring=%(2000,1000,475,375)" />
+
+<!-- SIP -->
+<X-PRE-PROCESS cmd="set" data="sip_tls_version=tlsv1,tlsv1.1,tlsv1.2,tlsv1.3,sslv23" />
+<X-PRE-PROCESS cmd="set" data="unroll_loops=true" />
+
+<!-- SIP Profile: External -->
+<X-PRE-PROCESS cmd="set" data="external_sip_port=5090" />
+<X-PRE-PROCESS cmd="set" data="external_tls_port=5091" />
+<X-PRE-PROCESS cmd="set" data="external_ssl_enable=false" />
+<X-PRE-PROCESS cmd="set" data="external_ssl_dir=$${conf_dir}/tls" />
+
+<!-- SIP Profile: Internal -->
+<X-PRE-PROCESS cmd="set" data="internal_ssl_dir=$${conf_dir}/tls" />
+<X-PRE-PROCESS cmd="set" data="internal_sip_port=5070" />
+<X-PRE-PROCESS cmd="set" data="internal_tls_port=5071" />
+<X-PRE-PROCESS cmd="set" data="internal_ssl_enable=false" />
+
+<!-- Sound -->
+<X-PRE-PROCESS cmd="set" data="sound_prefix=$${sounds_dir}/en/us/callie" />
+
+<!-- Tones -->
+<X-PRE-PROCESS cmd="set" data="vacant-uk-tone=%(330,15,950);%(330,15,1400);%(330,1000,1800)" />
+<X-PRE-PROCESS cmd="set" data="busy-us-tone=%(500,500,480,620)" />
+<X-PRE-PROCESS cmd="set" data="busy-au-tone=v" />
+<X-PRE-PROCESS cmd="set" data="bong-us-tone=v" />
+<X-PRE-PROCESS cmd="set" data="vacant-us-tone=%(274,0,913.8);%(274,0,1370.6);%(380,0,1776.7)" />
+
+<!-- XMPP -->
+<X-PRE-PROCESS cmd="set" data="xmpp_client_profile=xmppc" />
+<X-PRE-PROCESS cmd="set" data="bind_server_ip=13.36.87.234" />
+<X-PRE-PROCESS cmd="set" data="xmpp_server_profile=xmpps" />
+
+<X-PRE-PROCESS cmd="set" data="SIPPROXYIP=172.31.23.44:5060" />
+
+
+<X-PRE-PROCESS cmd="set" data="dsn_system=pgsql://hostaddr=65.2.67.84 port=5432 dbname=ucall user=postgres password=BngrpF2vAqIdn4MbTVTUVUO9I options='' application_name='ucall'" />
+<X-PRE-PROCESS cmd="set" data="kamailio=pgsql://hostaddr=65.2.67.84 port=5432 dbname=kamailio user=kamailio password=BngrpF2vAqIdn4MbTVTUVUO9I options='' application_name='kamailio'" />
+
+
+ <!-- WebRTC Video -->
+  <!-- Suppress CNG for WebRTC Audio -->
+  <X-PRE-PROCESS cmd="set" data="suppress_cng=true"/>
+  <!-- Enable liberal DTMF for those that can't get it right -->
+  <X-PRE-PROCESS cmd="set" data="rtp_liberal_dtmf=true"/>
+  <!-- Helps with WebRTC Audio -->
+  <X-PRE-PROCESS cmd="set" data="answer_delay=2000"/> 
+  

@@ -1,0 +1,7 @@
+<configuration name="db.conf" description="LIMIT DB Configuration">
+  <settings>
+    <!--<param name="odbc-dsn" value="$${dsn}"/>-->
+    <!-- <param name="odbc-dsn" value="pgsql://hostaddr=65.2.67.84 dbname=ucall  user=ucall password='BngrpF2vAqIdn4MbTVTUVUO9I'"/>-->
+
+  </settings>
+</configuration>
